@@ -10,13 +10,27 @@ if ( ! defined( 'ABSPATH' ) ) exit; // Prevent direct access
 
 // Enqueue scripts & styles
 function appointment_enqueue_assets() {
-    wp_enqueue_style( 'appointment-css', plugin_dir_url(__FILE__) . 'assets/booking.css' );
-    wp_enqueue_script( 'appointment-js', plugin_dir_url(__FILE__) . 'assets/booking.js', array('jquery'), null, true );
+    wp_enqueue_style(
+        'appointment-css',
+        plugin_dir_url(__FILE__) . 'assets/booking.css',
+        array(),
+        time() // force refresh CSS on every load
+    );
+
+    wp_enqueue_script(
+        'appointment-js',
+        plugin_dir_url(__FILE__) . 'assets/booking.js',
+        array('jquery'),
+        time(), // also bust cache for JS
+        true
+    );
 
     wp_localize_script( 'appointment-js', 'appointmentAjax', array(
         'ajax_url' => admin_url('admin-ajax.php')
     ));
 }
+
+
 add_action( 'wp_enqueue_scripts', 'appointment_enqueue_assets' );
 
 
@@ -193,7 +207,7 @@ function appointment_send_email_notifications($post_id, $post, $update) {
     $admin_email = get_option('admin_email');
 
     // Subject & message
-    $subject_admin = "📅 New Appointment Booked: $name";
+    $subject_admin = " New Appointment Booked: $name";
     $message_admin = "
 A new appointment has been booked:
 
@@ -209,7 +223,7 @@ Notes: $notes
 
     // Send Confirmation to User
     if (!empty($email)) {
-        $subject_user = "✅ Appointment Confirmation - $date at $time";
+        $subject_user = " Appointment Confirmation - $date at $time";
         $message_user = "Hello $name,
 
 Thank you for booking an appointment with us! Here are your details:
@@ -225,6 +239,108 @@ We look forward to speaking with you.
     }
 }
 add_action('wp_insert_post', 'appointment_send_email_notifications', 10, 3);
+
+
+
+// Add Appointment Settings submenu
+function appointment_register_settings_submenu() {
+    add_submenu_page(
+        'edit.php?post_type=appointment', // parent = Appointments CPT
+        'Appointment Settings',           // Page title
+        'Settings',                       // Menu title (what shows in submenu)
+        'manage_options',                 // Capability
+        'appointment-settings',           // Menu slug
+        'appointment_settings_page_html'  // Callback function
+    );
+}
+add_action('admin_menu', 'appointment_register_settings_submenu');
+
+
+
+
+function appointment_settings_page_html() {
+    if (!current_user_can('manage_options')) {
+        return;
+    }
+
+    // Save options
+    if (isset($_POST['appointment_settings_submit'])) {
+        update_option('appointment_host_name', sanitize_text_field($_POST['appointment_host_name']));
+        update_option('appointment_host_company', sanitize_text_field($_POST['appointment_host_company']));
+        update_option('appointment_clients_list', wp_kses_post($_POST['appointment_clients_list']));
+        update_option('appointment_duration', sanitize_text_field($_POST['appointment_duration']));
+        update_option('appointment_platform', sanitize_text_field($_POST['appointment_platform']));
+        update_option('appointment_timezone', sanitize_text_field($_POST['appointment_timezone']));
+        update_option('appointment_timeslots', array_map('sanitize_text_field', explode(',', $_POST['appointment_timeslots'])));
+
+        echo '<div class="updated"><p>Settings saved!</p></div>';
+    }
+
+    $host_name    = get_option('appointment_host_name', 'Mehdi');
+    $host_company = get_option('appointment_host_company', 'Trinet®');
+    $clients_list = get_option('appointment_clients_list', "- test ($20M)");
+    $duration     = get_option('appointment_duration', '20m');
+    $platform     = get_option('appointment_platform', 'Google Meet');
+    $timezone     = get_option('appointment_timezone', 'Asia/Dhaka');
+    $timeslots    = implode(',', (array)get_option('appointment_timeslots', ['4:40pm','5:00pm','5:20pm','5:40pm','8:00pm','8:40pm']));
+    ?>
+    <div class="wrap">
+        <h1>Appointment Settings</h1>
+        <form method="post">
+            <table class="form-table">
+                <tr>
+                    <th scope="row">Host Name</th>
+                    <td><input type="text" name="appointment_host_name" value="<?php echo esc_attr($host_name); ?>" class="regular-text"></td>
+                </tr>
+                <tr>
+                    <th scope="row">Company</th>
+                    <td><input type="text" name="appointment_host_company" value="<?php echo esc_attr($host_company); ?>" class="regular-text"></td>
+                </tr>
+                <tr>
+                    <th scope="row">Clients List (HTML allowed)</th>
+                    <td><textarea name="appointment_clients_list" class="large-text" rows="5"><?php echo esc_textarea($clients_list); ?></textarea></td>
+                </tr>
+                <tr>
+                    <th scope="row">Meeting Duration</th>
+                    <td><input type="text" name="appointment_duration" value="<?php echo esc_attr($duration); ?>" class="small-text"> (e.g. 20m, 30m, 1h)</td>
+                </tr>
+                <tr>
+                    <th scope="row">Meeting Platform</th>
+                    <td>
+                        <select name="appointment_platform">
+                            <option value="Google Meet" <?php selected($platform,'Google Meet'); ?>>Google Meet</option>
+                            <option value="Zoom" <?php selected($platform,'Zoom'); ?>>Zoom</option>
+                            <option value="Microsoft Teams" <?php selected($platform,'Microsoft Teams'); ?>>Microsoft Teams</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">Timezone</th>
+                    <td>
+                        <select name="appointment_timezone">
+                            <?php
+                            foreach(timezone_identifiers_list() as $tz){
+                                echo '<option value="'.esc_attr($tz).'" '.selected($timezone,$tz,false).'>'.$tz.'</option>';
+                            }
+                            ?>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">Available Time Slots</th>
+                    <td>
+                        <input type="text" name="appointment_timeslots" value="<?php echo esc_attr($timeslots); ?>" class="large-text">
+                        <p class="description">Enter times separated by commas (e.g. 4:40pm,5:00pm,5:20pm,5:40pm,8:00pm,8:40pm)</p>
+                    </td>
+                </tr>
+            </table>
+            <p><input type="submit" name="appointment_settings_submit" class="button-primary" value="Save Changes"></p>
+        </form>
+    </div>
+    <?php
+}
+
+
 
 
 

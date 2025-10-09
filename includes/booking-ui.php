@@ -1,16 +1,18 @@
 <section class="booking-wrapper">
   <!-- LEFT INFO -->
   <div class="booking-meta" id="metaInfo">
-    <h2>Chat with Sajon - OrixCreative®</h2>
-    <p>Let’s hop on a free intro call!</p>
-    <p>Our clients include:<br>
-      - <a href="#">Aviato</a> ($20M)<br>
-      - <a href="#">Tandem</a> ($6.1M)<br>
-      - <a href="#">Gamestarter</a> ($2.9M)
-    </p>
-    <div class="meta-item">⏱️ 20m</div>
-    <div class="meta-item">📹 Google Meet</div>
-    <div class="meta-item">🌍 Asia/Dhaka</div>
+    <div class="appointment-header">
+      <h2>
+        Chat with <?php echo esc_html(get_option('appointment_host_name')); ?> - 
+        <?php echo esc_html(get_option('appointment_host_company')); ?>
+      </h2>
+      <p>Our clients include:</p>
+      <div><?php echo wp_kses_post(get_option('appointment_clients_list')); ?></div>
+    </div>
+
+    <p>⏱️ <?php echo esc_html(get_option('appointment_duration', '20m')); ?></p>
+    <p>📹 <?php echo esc_html(get_option('appointment_platform', 'Google Meet')); ?></p>
+    <p>🌍 <?php echo esc_html(get_option('appointment_timezone', 'Asia/Dhaka')); ?></p>
   </div>
 
   <!-- RIGHT PANEL -->
@@ -20,21 +22,24 @@
       <div class="calendar-container">
         <div class="calendar">
           <div class="calendar-header">
-            <button id="prevMonth">‹</button>
+            <button id="prevMonth" aria-label="Previous month">‹</button>
             <span id="monthYear"></span>
-            <button id="nextMonth">›</button>
+            <button id="nextMonth" aria-label="Next month">›</button>
           </div>
           <div class="calendar-grid" id="calendarGrid"></div>
         </div>
         <div>
           <div class="times-header">
             <span id="dayLabel">Select a date</span>
-            <div>
-              <button class="time-btn small">12h</button>
-              <button class="time-btn small">24h</button>
-            </div>
           </div>
-          <div id="timeSlots"></div>
+          <div id="timeSlots">
+            <?php
+              $times = (array)get_option('appointment_timeslots');
+              foreach ($times as $time) {
+                  echo '<button class="slot">'.esc_html($time).'</button>';
+              }
+            ?>
+          </div>
         </div>
       </div>
     </div>
@@ -42,12 +47,15 @@
     <!-- STEP 2 -->
     <div id="step2" style="display:none;">
       <form class="booking-form" id="bookingForm">
-        <label>Your name *</label>
-        <input type="text" id="name" required>
-        <label>Email address *</label>
-        <input type="email" id="email" required>
-        <label>Additional notes</label>
-        <textarea id="notes"></textarea>
+        <label for="name">Your name *</label>
+        <input type="text" id="name" name="name" required>
+
+        <label for="email">Email address *</label>
+        <input type="email" id="email" name="email" required>
+
+        <label for="notes">Additional notes</label>
+        <textarea id="notes" name="notes"></textarea>
+
         <div class="form-actions">
           <button type="button" class="btn btn-back" id="backBtn">Back</button>
           <button type="submit" class="btn btn-confirm">Confirm</button>
