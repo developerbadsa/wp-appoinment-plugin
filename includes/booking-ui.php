@@ -10,9 +10,13 @@
       <div><?php echo wp_kses_post(get_option('appointment_clients_list')); ?></div>
     </div>
 
-    <p>⏱️ <?php echo esc_html(get_option('appointment_duration', '20m')); ?></p>
+<div class="meeting-info-details">
+    
+        <p>⏱️ <?php echo esc_html(get_option('appointment_duration', '20m')); ?></p>
     <p>📹 <?php echo esc_html(get_option('appointment_platform', 'Google Meet')); ?></p>
     <p>🌍 <?php echo esc_html(get_option('appointment_timezone', 'Asia/Dhaka')); ?></p>
+</div>
+
   </div>
 
   <!-- RIGHT PANEL -->

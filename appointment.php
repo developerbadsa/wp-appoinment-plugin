@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Appointment
- * Description: Custom appointment booking widget with calendar + form (Cal.com style)
+ * Description: Custom appointment appoinment widget with calendar + form (Cal.com style)
  * Version: 1.0
  * Author: Rahim Badsa
  */
@@ -28,6 +28,23 @@ function appointment_enqueue_assets() {
     wp_localize_script( 'appointment-js', 'appointmentAjax', array(
         'ajax_url' => admin_url('admin-ajax.php')
     ));
+    
+    
+    
+    
+     // Localize PHP options for use in booking.js
+    wp_localize_script('appointment-js', 'appointmentAjax', [
+        'ajax_url' => admin_url('admin-ajax.php')
+    ]);
+
+    wp_localize_script('appointment-js', 'wpData', [
+        'host_name'    => get_option('appointment_host_name', 'Host'),
+        'company'      => get_option('appointment_host_company', 'Company'),
+        'clients_html' => wp_kses_post(get_option('appointment_clients_list', '')),
+        'duration'     => get_option('appointment_duration', '20m'),
+        'platform'     => get_option('appointment_platform', 'Google Meet'),
+        'timezone'     => get_option('appointment_timezone', 'Asia/Dhaka'),
+    ]);
 }
 
 
