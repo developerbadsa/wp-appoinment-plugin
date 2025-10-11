@@ -24,11 +24,6 @@ function appointment_enqueue_assets() {
         time(), // also bust cache for JS
         true
     );
-
-    wp_localize_script( 'appointment-js', 'appointmentAjax', array(
-        'ajax_url' => admin_url('admin-ajax.php')
-    ));
-    
     
     
     
@@ -41,6 +36,10 @@ function appointment_enqueue_assets() {
         'host_name'    => get_option('appointment_host_name', 'Host'),
         'company'      => get_option('appointment_host_company', 'Company'),
         'clients_html' => wp_kses_post(get_option('appointment_clients_list', '')),
+'timeslots' => array_values((array) get_option(
+    'appointment_timeslots',
+    ['4:40pm','5:00pm','5:20pm','5:40pm','8:00pm','8:40pm']
+)),
         'duration'     => get_option('appointment_duration', '20m'),
         'platform'     => get_option('appointment_platform', 'Google Meet'),
         'timezone'     => get_option('appointment_timezone', 'Asia/Dhaka'),
