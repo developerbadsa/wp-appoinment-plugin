@@ -220,7 +220,12 @@ function appointment_send_email_notifications($post_id, $post, $update) {
     $notes = $post->post_content;
 
     // Admin email
-    $admin_email = get_option('admin_email');
+    // $admin_email = get_option('admin_email');
+    
+   $admin_email = get_option('appointment_notify_email', get_option('admin_email'));
+
+
+    
 
     // Subject & message
     $subject_admin = " New Appointment Booked: $name";
@@ -285,6 +290,7 @@ function appointment_settings_page_html() {
         update_option('appointment_host_company', sanitize_text_field($_POST['appointment_host_company']));
         update_option('appointment_clients_list', wp_kses_post($_POST['appointment_clients_list']));
         update_option('appointment_duration', sanitize_text_field($_POST['appointment_duration']));
+        update_option('appointment_notify_email', sanitize_email($_POST['appointment_notify_email']));
         update_option('appointment_platform', sanitize_text_field($_POST['appointment_platform']));
         update_option('appointment_timezone', sanitize_text_field($_POST['appointment_timezone']));
         update_option('appointment_timeslots', array_map('sanitize_text_field', explode(',', $_POST['appointment_timeslots'])));
@@ -320,6 +326,14 @@ function appointment_settings_page_html() {
                     <th scope="row">Meeting Duration</th>
                     <td><input type="text" name="appointment_duration" value="<?php echo esc_attr($duration); ?>" class="small-text"> (e.g. 20m, 30m, 1h)</td>
                 </tr>
+                <tr>
+  <th scope="row">Notification Email</th>
+  <td>
+    <input type="email" name="appointment_notify_email" value="<?php echo esc_attr( get_option('appointment_notify_email', get_option('admin_email')) ); ?>" class="regular-text">
+    <p class="description">Enter the email address where new appointment notifications should be sent.</p>
+  </td>
+</tr>
+
                 <tr>
                     <th scope="row">Meeting Platform</th>
                     <td>
